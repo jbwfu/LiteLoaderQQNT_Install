@@ -274,6 +274,16 @@ function install_liteloaderqqnt() {
     fi
 }
 
+# 为 patch_resources 函数生成 js 内容
+generate_js_context() {
+    local input_path="$1"
+    if [[ "$input_path" =~ (^"$HOME"$|^"$HOME/") ]]; then
+        echo -e "const path = require('node:path');\nconst home_path = process.env.HOME;\nrequire(path.join(home_path, \"${input_path#$HOME/}\"));"
+    else
+        echo -e "const path = require('node:path');\n\nrequire(\"$input_path\");"
+    fi
+}
+
 # 修补 resources，创建 *.js 文件，并修改 package.json
 function patch_resources() {
     local ll_path=$liteloaderqqnt_path  # LiteLoaderQQNT 路径，默认相对 $qq_res_path/app/app_launcher
@@ -284,10 +294,13 @@ function patch_resources() {
 
     [[ "$LITELOADERQQNT_DIR" =~ ^(qq|appimage)$ ]] && ll_path="./LiteLoaderQQNT"
 
+    local context="require(\"${ll_path%/}\");"
+    [ "$PLATFORM" = "linux" ] && context=$(generate_js_context "$ll_path")
+
     # 写入 require(String.raw`*`) 到 *.js 文件
-    echo "正在将 'require(\"${ll_path%/}\");' 写入 app_launcher/$jsfile_name"
-    echo "require(\"${ll_path%/}\");" | sudo tee "$jsfile_path" > /dev/null
-    echo "写入成功"
+    echo "正在创建 app_launcher/$jsfile_name"
+    echo "$context" | sudo tee "$jsfile_path" > /dev/null
+    echo "创建成功：'$context'"
 
     # 检查 package.json 文件是否存在
     local package_json="$qq_res_path/app/package.json"
