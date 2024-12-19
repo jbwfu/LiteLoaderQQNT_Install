@@ -43,13 +43,11 @@ EOF
 }
 
 log_info() {
-    local message="$1"
-    echo -e "\e[32m[INFO]\e[0m : $message"
+    printf "\e[32m[INFO]\e[0m : $1\n"
 }
 
 log_error() {
-    local message="$1"
-    echo -e "\e[31m[ERROR]\e[0m: $message" >&2
+    printf "\e[31m[ERROR]\e[0m: $1\n" >&2
 }
 
 # 依赖检查
